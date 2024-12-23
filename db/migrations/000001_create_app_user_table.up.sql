@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS app_user(
+  id CHAR(24) PRIMARY KEY,
+  email VARCHAR(300) NOT NULL,
+  pwd VARCHAR(512) NOT NULL,
+  is_verified BOOLEAN,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP,
+  last_login_at TIMESTAMP
+);
