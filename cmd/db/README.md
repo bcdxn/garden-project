@@ -29,7 +29,13 @@ docker run \
 ### Run Migrations (Up)
 
 ```sh
-migrate  \
-  -database "postgresql://postgres@0.0.0.0:5432/postgres?sslmode=disable" \
-  -path db/migrations up
+DB_URI="postgresql://postgres@0.0.0.0:5432/postgres?sslmode=disable" \
+go run cmd/db/migrations/main.go up
+```
+
+### Seed Database 'Constants'
+
+```sh
+DB_URI="postgresql://postgres@0.0.0.0:5432/postgres?sslmode=disable" \
+go run cmd/db/seeds/main.go up
 ```
