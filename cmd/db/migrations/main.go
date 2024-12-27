@@ -32,7 +32,7 @@ func main() {
 	}
 
 	m, err := migrate.New(
-		"file://./db/migrations",
+		"file://./internal/db/migrations",
 		dbURI)
 	if err != nil {
 		log.Fatal("error creating migration instance", err)
@@ -44,8 +44,15 @@ func main() {
 		err = m.Down()
 	}
 
-	if err != nil {
-		log.Fatal("error running migration", err)
+	if err == migrate.ErrNoChange {
+		log.Println("Migration already at latest; no changes")
+	} else if err != nil {
+		log.Fatal("error running migration: ", err)
+	} else {
+		log.Println("Migration ran successfully")
 	}
-
+	version, dirty, _ := m.Version()
+	log.Println("Migration result:")
+	log.Printf("\tVersion: %d\n", version)
+	log.Printf("\tIs Dirty: %v\n", dirty)
 }

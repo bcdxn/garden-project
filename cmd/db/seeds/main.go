@@ -15,5 +15,5 @@ func main() {
 		log.Fatal("missing required env var: DB_URI")
 	}
 
-	seeds.Roles(context.Background(), dbURI)
+	seeds.Run(context.Background(), dbURI, seeds.Seed_000001_rbac)
 }

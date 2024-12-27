@@ -6,28 +6,16 @@ import (
 	"log"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/segmentio/ksuid"
 )
 
 const (
-	insertRoleQuery = `
-INSERT INTO rbac_role(id, name)
-VALUES($1, $2)
-`
-	querySeedsVersion = `
-SELECT version, dirty FROM seeds
-`
-
-	insertSeedsVersion = `
-INSERT INTO seeds(version, dirty)
-VALUES($1, $2)
-`
+	querySeedsVersion  = "SELECT version FROM seeds"
+	deleteSeedsVersion = "DELETE FROM seeds"
+	insertSeedsVersion = "INSERT INTO seeds(version, dirty) VALUES($1, $2)"
 )
 
-const rolesSchemaSeedsVersion = 1
-
-func Roles(ctx context.Context, dbURI string) error {
-	// Open a database/sql connection using pgx
+func Run(ctx context.Context, dbURI string, s seed) error {
+	// 0pen a database/sql connection using pgx
 	db, err := sql.Open("pgx", dbURI)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
@@ -38,11 +26,12 @@ func Roles(ctx context.Context, dbURI string) error {
 	if err != nil {
 		log.Fatalf("error connecting to database - %s", err.Error())
 	}
-
+	// start a transaction
 	tx, err := conn.BeginTx(ctx, &sql.TxOptions{})
 	if err != nil {
 		return err
 	}
+	// commit or rollback the transaction depending on the error status on function exit
 	defer func() {
 		if err != nil {
 			tx.Rollback()
@@ -50,53 +39,56 @@ func Roles(ctx context.Context, dbURI string) error {
 			tx.Commit()
 		}
 	}()
-
-	var sr seedsRecord
+	// load the seeds version record to check where we are in the seeding steps
+	var currentVersion int
 	rows := tx.QueryRowContext(ctx, querySeedsVersion)
-	err = rows.Scan(&sr)
-
+	err = rows.Scan(&currentVersion)
 	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
-
-	// the seeding for roles has already run
-	if sr.Version >= rolesSchemaSeedsVersion {
+	// check if the seeding for this particular step has already run
+	if currentVersion >= s.Version {
 		return nil
 	}
 	// reset err variable so that tx can be committed
 	err = nil
-
-	roles := []struct {
-		id   string
-		name string
-	}{
-		{
-			id:   "rol_" + ksuid.New().String(),
-			name: "user",
-		},
-		{
-			id:   "rol_" + ksuid.New().String(),
-			name: "verified_user",
-		},
-		{
-			id:   "rol_" + ksuid.New().String(),
-			name: "admin",
-		},
-	}
-
-	for _, role := range roles {
-		_, err := tx.QueryContext(ctx, insertRoleQuery, role.id, role.name)
-		if err != nil {
-			log.Fatalf("error inserting role - %s", err.Error())
+	// iterate over each step in the seed set
+	for _, step := range s.Steps {
+		// iterate over the data set and insert into the database
+		for _, data := range step.Data {
+			_, err := tx.QueryContext(ctx, step.SQL, data...)
+			if err != nil {
+				log.Fatalf("error seeding record - %s", err.Error())
+			}
 		}
 	}
-
-	_, err = tx.QueryContext(ctx, insertSeedsVersion, 1, false)
+	// delete the old seeds version
+	_, err = tx.QueryContext(ctx, deleteSeedsVersion)
+	// insert the new seeds version
+	_, err = tx.QueryContext(ctx, insertSeedsVersion, s.Version, false)
 
 	return nil
 }
 
-type seedsRecord struct {
+/* Internal Types
+------------------------------------------------------------------------------------------------- */
+
+type seed struct {
+	Version int
+	Steps   []seedStep
+}
+
+type seedStep struct {
+	SQL  string
+	Data [][]any
+}
+
+type seedData struct {
+	SQL  string
+	Args []any
+}
+
+type seedsVersion struct {
 	Version int  `sql:"version"`
 	Dirty   bool `sql:"dirty"`
 }
