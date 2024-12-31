@@ -31,7 +31,7 @@ func (Server) GetPing(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s Server) GetApiV1Roles(w http.ResponseWriter, r *http.Request) {
-	roles, err := s.rbacService.ListRoles()
+	roles, err := s.rbacService.ListRoles(r.Context())
 	if err != nil {
 		w.WriteHeader(500)
 		w.Write([]byte(`{"status":500, "error": "InternalServerError"}`))
