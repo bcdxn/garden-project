@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/bcdxn/garden-project/internal/db/seeds"
+	"github.com/bcdxn/garden-project/internal/infrastructure/db/seeds"
 )
 
 func main() {

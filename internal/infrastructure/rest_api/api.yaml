@@ -1,0 +1,45 @@
+openapi: "3.2.0"
+info:
+  version: 1.0.0
+  title: Minimal ping API server
+paths:
+  /ping:
+    get:
+      responses:
+        '200':
+          description: pet response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pong'
+  /api/v1/roles:
+    get:
+      description: get all RBAC roles in the system
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListRolesResponse'
+components:
+  schemas:
+    # base types
+    Pong:
+      type: object
+      required:
+        - ping
+      properties:
+        ping:
+          type: string
+          example: pong
+    ListRolesResponse:
+      type: array
+      items:
+        type: object
+        additionalProperties:
+          $ref: '#/components/schemas/RBACRole'
+    RBACRole:
+      type: 'object'
+      properties:
+        id: {"type": "string"}
+        name: {"type": "string"}
