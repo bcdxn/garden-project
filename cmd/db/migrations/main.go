@@ -32,7 +32,7 @@ func main() {
 	}
 
 	m, err := migrate.New(
-		"file://./internal/db/migrations",
+		"file://./internal/infrastructure/db/migrations",
 		dbURI)
 	if err != nil {
 		log.Fatal("error creating migration instance", err)
