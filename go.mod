@@ -8,6 +8,7 @@ require (
 	github.com/jackc/pgx/v5 v5.7.2
 	github.com/segmentio/ksuid v1.0.4
 	github.com/swaggest/swgui v1.8.2
+	github.com/urfave/negroni v1.0.0
 )
 
 require (

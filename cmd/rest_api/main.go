@@ -1,25 +1,32 @@
 package main
 
 import (
-	"log"
+	"context"
 	"net/http"
+	"net/url"
 	"os"
 
 	rbac_app "github.com/bcdxn/garden-project/internal/app/rbac"
 	"github.com/bcdxn/garden-project/internal/infrastructure/db/database"
 	rbac_model "github.com/bcdxn/garden-project/internal/infrastructure/db/rbac"
+	"github.com/bcdxn/garden-project/internal/infrastructure/http_middleware"
+	"github.com/bcdxn/garden-project/internal/infrastructure/logger"
 	"github.com/bcdxn/garden-project/internal/infrastructure/rest_api"
 	"github.com/swaggest/swgui/v5emb"
 )
 
 func main() {
+	ctx := context.Background()
 	// todo: formalize config
+	// instantiate application logger
+	logger := logger.NewAppLogger([]any{http_middleware.RequestIDCtxKey})
 	dbURI := os.Getenv("DB_URI")
 	if dbURI == "" {
-		log.Fatal("missing required env var DB_URI")
+		logger.ErrorContext(ctx, "missing required env var DB_URI")
+		os.Exit(1)
 	}
 	// Initialize DB connection
-	db := database.Connect(dbURI)
+	db := database.Connect(ctx, logger, dbURI)
 	// Instantiate Repository Implementations
 	rbacRepository := &rbac_model.Model{DB: db}
 	// Instantiate Services
@@ -38,11 +45,25 @@ func main() {
 		"/_docs/api/v1/openapi.yaml",
 		"/_docs/api/v1/ui",
 	))
+	// Add middleware
+	handler := rest_api.HandlerFromMux(server, router)
+	handler = http_middleware.LogRequest(logger)(handler)
+	handler = http_middleware.AddRequestID()(handler)
+	addr := "http://0.0.0.0:8080"
+	uri, err := url.Parse(addr)
+	if err != nil {
+		logger.ErrorContext(ctx, "invalid http server address", "err", err)
+	}
 	// instantiate http server
 	s := &http.Server{
-		Handler: rest_api.HandlerFromMux(server, router),
-		Addr:    "0.0.0.0:8080",
+		Handler: handler,
+		Addr:    uri.Host,
 	}
-	// And we serve HTTP until the world ends.
-	log.Fatal(s.ListenAndServe())
+	// Listen for HTTP requests
+	logger.InfoContext(ctx, "http server is listening", "host", uri.Hostname(), "port", uri.Port())
+	err = s.ListenAndServe()
+	if err != nil {
+		logger.ErrorContext(ctx, "error running http server", "err", err)
+		os.Exit(1)
+	}
 }
