@@ -20,16 +20,6 @@ func NewServer(rbacService *rbac_app.Service) Server {
 	}
 }
 
-// (GET /ping)
-func (Server) GetPing(w http.ResponseWriter, r *http.Request) {
-	resp := Pong{
-		Ping: "pong",
-	}
-
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(resp)
-}
-
 func (s Server) GetApiV1Roles(w http.ResponseWriter, r *http.Request) {
 	roles, err := s.rbacService.ListRoles(r.Context())
 	if err != nil {

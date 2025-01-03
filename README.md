@@ -51,5 +51,5 @@ go run cmd/rest_api/main.go
 #### View API Documentation
 
 OpenAPI Spec is available via
-- hosted SwaggerUI: http://localhost8080/docs/api/v1
-- raw format: 
+- hosted SwaggerUI: http://localhost8080/docs/api/v1/ui
+- raw format: http://localhost:8080/_docs/api/v1/openapi.yaml

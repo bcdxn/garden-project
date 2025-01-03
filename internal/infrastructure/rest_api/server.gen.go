@@ -21,11 +21,6 @@ import (
 // ListRolesResponse defines model for ListRolesResponse.
 type ListRolesResponse = []map[string]RBACRole
 
-// Pong defines model for Pong.
-type Pong struct {
-	Ping string `json:"ping"`
-}
-
 // RBACRole defines model for RBACRole.
 type RBACRole struct {
 	Id   *string `json:"id,omitempty"`
@@ -37,9 +32,6 @@ type ServerInterface interface {
 
 	// (GET /api/v1/roles)
 	GetApiV1Roles(w http.ResponseWriter, r *http.Request)
-
-	// (GET /ping)
-	GetPing(w http.ResponseWriter, r *http.Request)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -56,20 +48,6 @@ func (siw *ServerInterfaceWrapper) GetApiV1Roles(w http.ResponseWriter, r *http.
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetApiV1Roles(w, r)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// GetPing operation middleware
-func (siw *ServerInterfaceWrapper) GetPing(w http.ResponseWriter, r *http.Request) {
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetPing(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -200,7 +178,6 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 
 	m.HandleFunc("GET "+options.BaseURL+"/api/v1/roles", wrapper.GetApiV1Roles)
-	m.HandleFunc("GET "+options.BaseURL+"/ping", wrapper.GetPing)
 
 	return m
 }
@@ -208,13 +185,13 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/7RSQc/TMAz9K5HhWH3p4Nbb4IAmgVTtwAVxCK23eWoTk5iJaep/R3a3wegkTvTQtC/2",
-	"ey95vkCXRk4RoxRoLlC6A47BPj9SkW0asGyxcIoFFSTB0XZD35NQimFoc2LMQmj464w7aOCV/83rr6R+",
-	"+279XhlhqkDOjNBA+nbETv4AQs7hrP9tinsl5Ad6phnFn2HkQRtY6+7tRbJWTFMFGb//oIw9NF/mtq9P",
-	"VO+WFkrU6/sv2gpiGPHJxvJEClHcJSsmMa+fKNIYBqd23LrduIL5hBkqOGEulCI0sHqpX2pVSowxMEED",
-	"bw2qgIMczJsPTP608lnjUWCPokuPpcvEMjPtUVwYBqdndFbqKDo5oCvnIjiCaeSg5ZseGviAsmb6vLLU",
-	"QW9wDt4k3tS1Ll2KgtHUAvNAnbX7Y1HJ2/z8axCWozXNTwX+lvD1SAuHLVne/82bzZ1ZebxNRnH50e6v",
-	"AAAA//+f5qFMPQMAAA==",
+	"H4sIAAAAAAAC/4RSTYvbMBD9K2Lao1k57WXRLe2hLPQQcuillGVqzcbayiMxmgRCyH8vo7qfKawPtvz0",
+	"9N6bGV1gKkstTKwNwgXaNNOCffkxNd2XTG1PrRZuZGBSWvouxpg0Fca8k1JJNFHHXws9QYBX/reuX0X9",
+	"/t32vSnCdQA9V4IA5eszTfoHgCJ4tv9f5HCB+pdFivZe+U0l8cEOMC70n41bL4MSPxUjR2qTpGqVQIDH",
+	"XUZ2yNGp4PTNnctR3AElEj/CAJrU8sCHjridFBN0290DDHAiaT9UNnfj3WiJSiXGmiDA2w4NUFHnXoPH",
+	"mvxp48UabMCB9DbPgdRhzs564TrVJXY6k2vnprRA9xA0+kO0ZKTbmj5t+txgAFlH1y3ejKN9psJK3N2w",
+	"1pymftw/N7P8eQNeGuXt5biuzwCNxJoB4fO/9eQyYXaRTpRLXYjVEZ+SFLY1DHCUDAFm1Rq87+S5NA33",
+	"4/0I1y/X7wEAAP//hdMwwq0CAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

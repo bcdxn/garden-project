@@ -1,17 +1,12 @@
 openapi: "3.0.0"
 info:
   version: 1.0.0
-  title: Minimal ping API server
+  title: Garden Project API
+  description: _Plan and track your garden_
+servers:
+- url: http://localhost:8080
+  description: local development environment
 paths:
-  /ping:
-    get:
-      responses:
-        '200':
-          description: pet response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Pong'
   /api/v1/roles:
     get:
       description: get all RBAC roles in the system
@@ -23,15 +18,6 @@ paths:
                 $ref: '#/components/schemas/ListRolesResponse'
 components:
   schemas:
-    # base types
-    Pong:
-      type: object
-      required:
-        - ping
-      properties:
-        ping:
-          type: string
-          example: pong
     ListRolesResponse:
       type: array
       items:
