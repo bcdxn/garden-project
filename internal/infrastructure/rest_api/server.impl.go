@@ -37,3 +37,21 @@ func (s Server) GetApiV1Roles(w http.ResponseWriter, r *http.Request) {
 
 	w.Write(rolesRes)
 }
+
+func (s Server) GetApiV1RolesRoleIdPermissions(w http.ResponseWriter, r *http.Request, roleId string) {
+	permissions, err := s.rbacService.ListPermissionsByRoleID(r.Context(), roleId)
+	if err != nil {
+		w.WriteHeader(500)
+		w.Write([]byte(`{"status":500, "error": "InternalServerError"}`))
+		return
+	}
+
+	permissionsRes, err := json.Marshal(permissions)
+	if err != nil {
+		w.WriteHeader(500)
+		w.Write([]byte(`{"status":500, "error": "InternalServerError"}`))
+		return
+	}
+
+	w.Write(permissionsRes)
+}

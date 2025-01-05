@@ -16,10 +16,32 @@ import (
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/oapi-codegen/runtime"
 )
+
+// ListPermissionsResponse defines model for ListPermissionsResponse.
+type ListPermissionsResponse = []map[string]RBACPermission
 
 // ListRolesResponse defines model for ListRolesResponse.
 type ListRolesResponse = []map[string]RBACRole
+
+// RBACAction defines model for RBACAction.
+type RBACAction struct {
+	Id   *string `json:"id,omitempty"`
+	Name *string `json:"name,omitempty"`
+}
+
+// RBACPermission defines model for RBACPermission.
+type RBACPermission struct {
+	Action   *map[string]RBACAction   `json:"action,omitempty"`
+	Resource *map[string]RBACResource `json:"resource,omitempty"`
+}
+
+// RBACResource defines model for RBACResource.
+type RBACResource struct {
+	Id   *string `json:"id,omitempty"`
+	Name *string `json:"name,omitempty"`
+}
 
 // RBACRole defines model for RBACRole.
 type RBACRole struct {
@@ -32,6 +54,9 @@ type ServerInterface interface {
 
 	// (GET /api/v1/roles)
 	GetApiV1Roles(w http.ResponseWriter, r *http.Request)
+
+	// (GET /api/v1/roles/{roleId}/permissions)
+	GetApiV1RolesRoleIdPermissions(w http.ResponseWriter, r *http.Request, roleId string)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -48,6 +73,31 @@ func (siw *ServerInterfaceWrapper) GetApiV1Roles(w http.ResponseWriter, r *http.
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetApiV1Roles(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetApiV1RolesRoleIdPermissions operation middleware
+func (siw *ServerInterfaceWrapper) GetApiV1RolesRoleIdPermissions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "roleId" -------------
+	var roleId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "roleId", r.PathValue("roleId"), &roleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "roleId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetApiV1RolesRoleIdPermissions(w, r, roleId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -178,6 +228,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 
 	m.HandleFunc("GET "+options.BaseURL+"/api/v1/roles", wrapper.GetApiV1Roles)
+	m.HandleFunc("GET "+options.BaseURL+"/api/v1/roles/{roleId}/permissions", wrapper.GetApiV1RolesRoleIdPermissions)
 
 	return m
 }
@@ -185,13 +236,15 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/4RSTYvbMBD9K2Lao1k57WXRLe2hLPQQcuillGVqzcbayiMxmgRCyH8vo7qfKawPtvz0",
-	"9N6bGV1gKkstTKwNwgXaNNOCffkxNd2XTG1PrRZuZGBSWvouxpg0Fca8k1JJNFHHXws9QYBX/reuX0X9",
-	"/t32vSnCdQA9V4IA5eszTfoHgCJ4tv9f5HCB+pdFivZe+U0l8cEOMC70n41bL4MSPxUjR2qTpGqVQIDH",
-	"XUZ2yNGp4PTNnctR3AElEj/CAJrU8sCHjridFBN0290DDHAiaT9UNnfj3WiJSiXGmiDA2w4NUFHnXoPH",
-	"mvxp48UabMCB9DbPgdRhzs564TrVJXY6k2vnprRA9xA0+kO0ZKTbmj5t+txgAFlH1y3ejKN9psJK3N2w",
-	"1pymftw/N7P8eQNeGuXt5biuzwCNxJoB4fO/9eQyYXaRTpRLXYjVEZ+SFLY1DHCUDAFm1Rq87+S5NA33",
-	"4/0I1y/X7wEAAP//hdMwwq0CAAA=",
+	"H4sIAAAAAAAC/7RUwW7bMAz9FYHb0ajc7VL4lu0wBNghyGGXoSg0mUnY2ZJGMQGCIP8+UE4Wp8nWYWtz",
+	"iG2Keu/xidQOfOxTDBgkQ7OD7FfYu/L6mbLMkHvKmWLIc8wphoy6RIJ9yXFtS0IxuG7GMSELYYm/ZVxA",
+	"A2/sCd0eoO38w+TjCRf2Fcg2ITQQvz2il1HAMbutfquUeezwZUUo4l/Ra/LEK4XCpjMSavX/sCMLU1jq",
+	"luB6vLJwje2JHxcM7hfzvxZ60H6NnDHHNXv8Lx+PGJcEv6t3PqJ9DT/L0b44toYoLKImt5g9UxqOBh5m",
+	"nQvGhdYIO//dbOOazdJxi+EBKhAS1QOfSsTMOCqgmcymUMEGeTh4uL2pb2pVFBMGlwgaeF9CFSQnq1KD",
+	"dYns5tayjoMGliiXepYoxnWdUS9MSTUUjKzQ5G0W7KFwsNP0aavKUCaJvtyWKYPSF2XQCsW7utaHj0Ew",
+	"FDaXUke+bLePeejOoSWea5jLUd4Pv+q8NLvTx7Td23S6g56td3RfmUVk40xO6GlBvrjw57LnhXAE8do+",
+	"XLtdj2Ykx65HQc7QfN0BaZXaBHDsVxj8KRp/rImxhUZ4jdVIwNOOvlfkjLw5wp672EXvOtPiBruYegxi",
+	"MGyIY9B3qGDNHTSwEkmNtSV5FbM0d/VdDfv7/c8AAAD//2QKVrxMBgAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

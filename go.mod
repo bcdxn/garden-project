@@ -6,14 +6,17 @@ require (
 	github.com/getkin/kin-openapi v0.128.0
 	github.com/golang-migrate/migrate/v4 v4.18.1
 	github.com/jackc/pgx/v5 v5.7.2
+	github.com/oapi-codegen/runtime v1.1.1
 	github.com/segmentio/ksuid v1.0.4
 	github.com/swaggest/swgui v1.8.2
 	github.com/urfave/negroni v1.0.0
 )
 
 require (
+	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/invopop/yaml v0.3.1 // indirect

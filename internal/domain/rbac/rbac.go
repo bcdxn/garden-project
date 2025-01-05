@@ -29,8 +29,10 @@ type Resource struct {
 }
 
 type Permission struct {
-	Action   Action
-	Resource Resource
+	Action    Action
+	Resource  Resource
+	CreatedAt time.Time
+	UpdatedAt value_type.NullableTime
 }
 
 type Repository interface {

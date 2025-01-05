@@ -16,6 +16,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListRolesResponse'
+  /api/v1/roles/{roleId}/permissions:
+    parameters:
+      - name: roleId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      description: get all Permissions for a specific role
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListPermissionsResponse'
 components:
   schemas:
     ListRolesResponse:
@@ -25,7 +40,34 @@ components:
         additionalProperties:
           $ref: '#/components/schemas/RBACRole'
     RBACRole:
-      type: 'object'
+      type: object
       properties:
         id: {"type": "string"}
         name: {"type": "string"}
+    ListPermissionsResponse:
+      type: array
+      items:
+        type: object
+        additionalProperties:
+          $ref: '#/components/schemas/RBACPermission'
+    RBACResource:
+      type: object
+      properties:
+        id: {"type": "string"}
+        name: {"type": "string"}
+    RBACAction:
+      type: object
+      properties:
+        id: {"type": "string"}
+        name: {"type": "string"}
+    RBACPermission:
+      type: object
+      properties:
+        action:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/RBACAction'
+        resource:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/RBACResource'
