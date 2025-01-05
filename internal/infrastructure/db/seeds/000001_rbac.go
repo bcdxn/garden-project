@@ -51,8 +51,8 @@ var (
 					{plantResId, "plant"},
 					{gardenResId, "garden"},
 					{userProfileResId, "userProfile"},
-					{roleResId, "userProfile"},
-					{actionResId, "userProfile"},
+					{roleResId, "role"},
+					{actionResId, "action"},
 				},
 			},
 			{
