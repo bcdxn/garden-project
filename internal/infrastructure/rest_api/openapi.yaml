@@ -31,6 +31,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListPermissionsResponse'
+  /api/v1/users:
+    get:
+      description: get all users in the system
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListUsersResponse'
 components:
   schemas:
     ListRolesResponse:
@@ -64,10 +73,34 @@ components:
       type: object
       properties:
         action:
-          type: object
-          additionalProperties:
-            $ref: '#/components/schemas/RBACAction'
+          type: string
         resource:
-          type: object
-          additionalProperties:
-            $ref: '#/components/schemas/RBACResource'
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ListUsersResponse:
+      type: array
+      items:
+        type: object
+        additionalProperties:
+          $ref: '#/components/schemas/User'
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        isVerified:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time

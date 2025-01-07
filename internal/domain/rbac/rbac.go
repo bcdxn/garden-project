@@ -29,8 +29,8 @@ type Resource struct {
 }
 
 type Permission struct {
-	Action    Action
-	Resource  Resource
+	Action    string
+	Resource  string
 	CreatedAt time.Time
 	UpdatedAt value_type.NullableTime
 }

@@ -7,8 +7,10 @@ import (
 	"os"
 
 	rbac_app "github.com/bcdxn/garden-project/internal/app/rbac"
+	user_app "github.com/bcdxn/garden-project/internal/app/user"
 	"github.com/bcdxn/garden-project/internal/infrastructure/db/database"
 	rbac_model "github.com/bcdxn/garden-project/internal/infrastructure/db/rbac"
+	user_model "github.com/bcdxn/garden-project/internal/infrastructure/db/user"
 	"github.com/bcdxn/garden-project/internal/infrastructure/http_middleware"
 	"github.com/bcdxn/garden-project/internal/infrastructure/logger"
 	"github.com/bcdxn/garden-project/internal/infrastructure/rest_api"
@@ -29,11 +31,13 @@ func main() {
 	db := database.Connect(ctx, logger, dbURI)
 	// Instantiate Repository Implementations
 	rbacRepository := &rbac_model.Model{DB: db}
+	userRepository := &user_model.Model{DB: db}
 	// Instantiate Services
 	rbacService := rbac_app.NewService(rbacRepository)
+	userService := user_app.NewService(userRepository)
 	// create a type that satisfies the `api.ServerInterface`, which contains an implementation of
 	//every operation from the generated code
-	server := rest_api.NewServer(rbacService)
+	server := rest_api.NewServer(rbacService, userService)
 	router := http.NewServeMux()
 	// serve open api yaml static file
 	router.HandleFunc("/_docs/api/v1/openapi.yaml", func(w http.ResponseWriter, r *http.Request) {

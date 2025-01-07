@@ -14,9 +14,11 @@ import (
 	"net/url"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/oapi-codegen/runtime"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 // ListPermissionsResponse defines model for ListPermissionsResponse.
@@ -25,28 +27,30 @@ type ListPermissionsResponse = []map[string]RBACPermission
 // ListRolesResponse defines model for ListRolesResponse.
 type ListRolesResponse = []map[string]RBACRole
 
-// RBACAction defines model for RBACAction.
-type RBACAction struct {
-	Id   *string `json:"id,omitempty"`
-	Name *string `json:"name,omitempty"`
-}
+// ListUsersResponse defines model for ListUsersResponse.
+type ListUsersResponse = []map[string]User
 
 // RBACPermission defines model for RBACPermission.
 type RBACPermission struct {
-	Action   *map[string]RBACAction   `json:"action,omitempty"`
-	Resource *map[string]RBACResource `json:"resource,omitempty"`
-}
-
-// RBACResource defines model for RBACResource.
-type RBACResource struct {
-	Id   *string `json:"id,omitempty"`
-	Name *string `json:"name,omitempty"`
+	Action    *string    `json:"action,omitempty"`
+	CreatedAt *time.Time `json:"createdAt,omitempty"`
+	Resource  *string    `json:"resource,omitempty"`
+	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
 }
 
 // RBACRole defines model for RBACRole.
 type RBACRole struct {
 	Id   *string `json:"id,omitempty"`
 	Name *string `json:"name,omitempty"`
+}
+
+// User defines model for User.
+type User struct {
+	CreatedAt  *time.Time           `json:"createdAt,omitempty"`
+	Email      *openapi_types.Email `json:"email,omitempty"`
+	Id         *string              `json:"id,omitempty"`
+	IsVerified *bool                `json:"isVerified,omitempty"`
+	UpdatedAt  *time.Time           `json:"updatedAt,omitempty"`
 }
 
 // ServerInterface represents all server handlers.
@@ -57,6 +61,9 @@ type ServerInterface interface {
 
 	// (GET /api/v1/roles/{roleId}/permissions)
 	GetApiV1RolesRoleIdPermissions(w http.ResponseWriter, r *http.Request, roleId string)
+
+	// (GET /api/v1/users)
+	GetApiV1Users(w http.ResponseWriter, r *http.Request)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -98,6 +105,20 @@ func (siw *ServerInterfaceWrapper) GetApiV1RolesRoleIdPermissions(w http.Respons
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetApiV1RolesRoleIdPermissions(w, r, roleId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetApiV1Users operation middleware
+func (siw *ServerInterfaceWrapper) GetApiV1Users(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetApiV1Users(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -229,6 +250,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 
 	m.HandleFunc("GET "+options.BaseURL+"/api/v1/roles", wrapper.GetApiV1Roles)
 	m.HandleFunc("GET "+options.BaseURL+"/api/v1/roles/{roleId}/permissions", wrapper.GetApiV1RolesRoleIdPermissions)
+	m.HandleFunc("GET "+options.BaseURL+"/api/v1/users", wrapper.GetApiV1Users)
 
 	return m
 }
@@ -236,15 +258,16 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/7RUwW7bMAz9FYHb0ajc7VL4lu0wBNghyGGXoSg0mUnY2ZJGMQGCIP8+UE4Wp8nWYWtz",
-	"iG2Keu/xidQOfOxTDBgkQ7OD7FfYu/L6mbLMkHvKmWLIc8wphoy6RIJ9yXFtS0IxuG7GMSELYYm/ZVxA",
-	"A2/sCd0eoO38w+TjCRf2Fcg2ITQQvz2il1HAMbutfquUeezwZUUo4l/Ra/LEK4XCpjMSavX/sCMLU1jq",
-	"luB6vLJwje2JHxcM7hfzvxZ60H6NnDHHNXv8Lx+PGJcEv6t3PqJ9DT/L0b44toYoLKImt5g9UxqOBh5m",
-	"nQvGhdYIO//dbOOazdJxi+EBKhAS1QOfSsTMOCqgmcymUMEGeTh4uL2pb2pVFBMGlwgaeF9CFSQnq1KD",
-	"dYns5tayjoMGliiXepYoxnWdUS9MSTUUjKzQ5G0W7KFwsNP0aavKUCaJvtyWKYPSF2XQCsW7utaHj0Ew",
-	"FDaXUke+bLePeejOoSWea5jLUd4Pv+q8NLvTx7Td23S6g56td3RfmUVk40xO6GlBvrjw57LnhXAE8do+",
-	"XLtdj2Ykx65HQc7QfN0BaZXaBHDsVxj8KRp/rImxhUZ4jdVIwNOOvlfkjLw5wp672EXvOtPiBruYegxi",
-	"MGyIY9B3qGDNHTSwEkmNtSV5FbM0d/VdDfv7/c8AAAD//2QKVrxMBgAA",
+	"H4sIAAAAAAAC/7RVTW/bMAz9KwK3o1en26XwLdthKLBDEGC9DEXBWkzCTpY0ig4QBPnvg+R+JI23dkOa",
+	"SxyKeu/xmWS20IYuBk9eEzRbSO2KOiyP3zjpjKTjlDj4NKcUg0+Uj1ipKzloLSsHj24mIZIoU4m/F1pA",
+	"A+/qJ/T6Hrqef55+ecKFXQW6iQQNhNs7anUvgCK4yb+zlHlwdFoRGfHV9N8TyenoM9qrqJ+Z1WwhHpBg",
+	"q/fx+5tJhf0yX22FUMlONZ8ugnSo0IBFpQ/KHUF1fEUohV5aGsXro/03vLH6Hn0/qoTtKKvHbkzOGHYx",
+	"9Qj3P2ygDtkdpA+RkdQ/qOZ0RcILpv3j2xAcoT+RlznEfhEygqXUCsehFeBm5tAb9NaoYPvTbEIvZoli",
+	"yd9kZNbsP3wtETOTkAHNdHYJFaxJhkaD87PJ2SRrDZE8RoYGPpVQBRF1VbytMXK9Pq8lz2YOLEmP9SxJ",
+	"DTpn8rs3JdWwN7oikzZJqYPCIZjTL21WRjqNfHVeRh5KW5axKxQfJ5PyWoNX8oUNY3Tcluv1XRqmYRi0",
+	"l8bweK/shk91WFq9zV+XdlfHp4X4Yr17y9Msghg0KVLLC26LC38ve14I9yDe2oexVf9gRkTBjpQkQfNj",
+	"C5yrzE0AD/MJgz9F46+eJfe9Sk/VnoDnHX2953KfCvYLhpasV/ZO2ddv7dnhn8LusXkSyfrBrMNSXGjR",
+	"GUtrciF25NWQX7MEn5+hgl4cNLBSjU1dl+RVSNpcTC4msLve/Q4AAP//cOtkA68HAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

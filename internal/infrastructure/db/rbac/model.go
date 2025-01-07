@@ -10,10 +10,12 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
+// Model is the concrete type that implements the rbac repository interface
 type Model struct {
 	DB *sql.DB
 }
 
+// ListRoles retrieves all roles from the database.
 func (m *Model) ListRoles(ctx context.Context) ([]rbac_domain.Role, error) {
 	type roleDTO struct {
 		ID        string       `sql:"id"`
@@ -22,7 +24,7 @@ func (m *Model) ListRoles(ctx context.Context) ([]rbac_domain.Role, error) {
 		UpdatedAt sql.NullTime `sql:"updated_at"`
 	}
 
-	var roles []rbac_domain.Role
+	roles := make([]rbac_domain.Role, 0)
 
 	query := "SELECT id, name, created_at, updated_at FROM rbac_role ORDER BY name"
 
@@ -37,6 +39,7 @@ func (m *Model) ListRoles(ctx context.Context) ([]rbac_domain.Role, error) {
 		if err != nil {
 			return roles, err
 		}
+
 		role := rbac_domain.Role{
 			ID:        roleRow.ID,
 			Name:      roleRow.Name,
@@ -52,6 +55,8 @@ func (m *Model) ListRoles(ctx context.Context) ([]rbac_domain.Role, error) {
 	return roles, nil
 }
 
+// ListPermissonsByRoleID retrieves a list of action/resource (i.e. a permission) pairs that a
+// particular role is entitled to.
 func (m *Model) ListPermissionsByRoleID(ctx context.Context, id string) ([]rbac_domain.Permission, error) {
 	type permissionDTO struct {
 		ActionID     string       `sql:"acton.id"`
@@ -72,7 +77,7 @@ func (m *Model) ListPermissionsByRoleID(ctx context.Context, id string) ([]rbac_
 		ORDER BY act.name, res.name
 	`
 
-	var permissions []rbac_domain.Permission
+	permissions := make([]rbac_domain.Permission, 0)
 
 	rows, err := m.DB.QueryContext(ctx, query, id)
 	if err != nil {
@@ -94,14 +99,8 @@ func (m *Model) ListPermissionsByRoleID(ctx context.Context, id string) ([]rbac_
 			return permissions, err
 		}
 		perm := rbac_domain.Permission{
-			Action: rbac_domain.Action{
-				ID:   permRow.ActionID,
-				Name: permRow.ActionName,
-			},
-			Resource: rbac_domain.Resource{
-				ID:   permRow.ResourceID,
-				Name: permRow.ResourceName,
-			},
+			Action:    permRow.ActionName,
+			Resource:  permRow.ResourceName,
 			CreatedAt: permRow.CreatedAt,
 			UpdatedAt: value_type.NullableTime{
 				Time:   permRow.UpdatedAt.Time,

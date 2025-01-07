@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	rbac_app "github.com/bcdxn/garden-project/internal/app/rbac"
+	user_app "github.com/bcdxn/garden-project/internal/app/user"
 )
 
 // ensure that we've conformed to the `ServerInterface` with a compile-time check
@@ -12,11 +13,13 @@ var _ ServerInterface = (*Server)(nil)
 
 type Server struct {
 	rbacService *rbac_app.Service
+	userService *user_app.Service
 }
 
-func NewServer(rbacService *rbac_app.Service) Server {
+func NewServer(rbacService *rbac_app.Service, userService *user_app.Service) Server {
 	return Server{
 		rbacService: rbacService,
+		userService: userService,
 	}
 }
 
@@ -54,4 +57,22 @@ func (s Server) GetApiV1RolesRoleIdPermissions(w http.ResponseWriter, r *http.Re
 	}
 
 	w.Write(permissionsRes)
+}
+
+func (s Server) GetApiV1Users(w http.ResponseWriter, r *http.Request) {
+	users, err := s.userService.ListUsers(r.Context())
+	if err != nil {
+		w.WriteHeader(500)
+		w.Write([]byte(`{"status":500, "error": "InternalServerError"}`))
+		return
+	}
+
+	usersRes, err := json.Marshal(users)
+	if err != nil {
+		w.WriteHeader(500)
+		w.Write([]byte(`{"status":500, "error": "InternalServerError"}`))
+		return
+	}
+
+	w.Write(usersRes)
 }
